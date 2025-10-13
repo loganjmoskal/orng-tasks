@@ -1,3 +1,3 @@
 print("Hello World")
 
-x = 2805
+x = 28

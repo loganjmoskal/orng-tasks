@@ -10,6 +10,7 @@ app.use(express.json());
 
 // Connect to MongoDB
 const mongoURI = process.env.MONGO_URI;
+mongoose.mongoose.connect(mongoURI)
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.log(err));
 

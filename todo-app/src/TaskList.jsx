@@ -14,9 +14,18 @@ function TaskList({showCompleted}) {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState("");
 
+  const [currentTime, setCurrentTime] = useState("Loading time...");
+
   // load tasks from the backend when the app starts
   useEffect(() => {
     loadTasks();
+    loadTime();
+
+    const timer = setInterval(() => {
+      loadTime();
+    }, 60000); // update time every minute
+
+    return () => clearInterval(timer);
   }, []);
 
   // function to load tasks from the backend
@@ -86,6 +95,17 @@ function TaskList({showCompleted}) {
     } catch (err) { console.error("Error saving edit:", err); }
   };
 
+  // function to load current time from microservice
+  const loadTime = async () => {
+  try {
+    const response = await axios.get("http://localhost:5000/time");
+    setCurrentTime(response.data.time);
+  } catch (err) {
+    console.error("Error loading time:", err);
+    setCurrentTime("Error loading time");
+  }
+};
+
   
   // Filter tasks based on showCompleted prop
   const filteredTasks = tasks.filter(task => 
@@ -96,7 +116,7 @@ function TaskList({showCompleted}) {
   return (
     <div>
       <h1>My Orng Tasks</h1>
-      
+      <h3>{currentTime}</h3>
       <Link to="/settings">Go to Settings</Link>
 
       <form onSubmit={handleAddTask} className="task-form">

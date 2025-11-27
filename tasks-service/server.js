@@ -14,9 +14,15 @@ mongoose.mongoose.connect(mongoURI)
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.log(err));
 
+// Import Microservices
+const dateTimeController = require('./datetime.controller');
+
 // Import task routes
 const taskRoutes = require('./task.routes');
 app.use('/tasks', taskRoutes);
+
+// Microservice routes
+app.get('/time', dateTimeController.getCurrentTime);
 
 // Start the server
 const PORT = 5000;

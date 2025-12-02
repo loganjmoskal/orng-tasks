@@ -14,7 +14,11 @@ function TaskList({showCompleted}) {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState("");
 
+  const [selectedFile, setSelectedFile] = useState(null);
+
   const [currentTime, setCurrentTime] = useState("Loading time...");
+
+  const [selectedDate, setSelectedDate] = useState("");
 
   // load tasks from the backend when the app starts
   useEffect(() => {
@@ -27,6 +31,31 @@ function TaskList({showCompleted}) {
 
     return () => clearInterval(timer);
   }, []);
+
+  // due date alert
+  useEffect(() => {
+    const checkDueDates = () => {
+      const now = new Date();
+      
+      tasks.forEach(task => {
+        // only check active tasks that have a due date
+        if (!task.completed && task.dueDate) {
+          const due = new Date(task.dueDate);
+          const timeDiff = due - now;
+
+          // alert if the task is due within the next 10 seconds
+          if (Math.abs(timeDiff) < 10000) { 
+             alert(`REMINDER: "${task.title}" is due now!`);
+          }
+        }
+      });
+    };
+
+    // run every 10 seconds
+    const alertInterval = setInterval(checkDueDates, 10000);
+
+    return () => clearInterval(alertInterval);
+  }, [tasks]);
 
   // function to load tasks from the backend
   const loadTasks = async () => {
@@ -43,13 +72,53 @@ function TaskList({showCompleted}) {
     e.preventDefault(); 
     if (!newTaskTitle) return;
 
+    let attachmentURL = "";
+
+    // if a file is selected, upload it first
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const uploadResponse = await axios.post("http://localhost:5001/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        attachmentURL = uploadResponse.data.url;
+      } catch (err) {
+        console.error("File upload failed:", err);
+        alert("Failed to upload file. Task will be created without it.");
+      }
+    }
+
+    // now create the task with the (possibly) uploaded attachment URL
     try {
-      // send the new task title to the API
-      const response = await axios.post(API_URL, { title: newTaskTitle });
+      const response = await axios.post(API_URL, {
+        title: newTaskTitle,
+        attachment: attachmentURL,
+        dueDate: selectedDate
+      });
+
+      const createdTask = response.data;
+
+      // schedule notification if due date is set
+      if (selectedDate) {
+        try {
+          await axios.post("http://localhost:5003/schedule", {
+            taskId: createdTask._id,
+            taskTitle: createdTask.title,
+            dueTime: selectedDate
+          });
+          console.log("Notification scheduled!");
+        } catch (notifErr) {
+          console.error("Failed to schedule notification:", notifErr);
+        }
+      }
       
-      // add the new task (from the DB) to our state
+      // add the new task to our state
       setTasks([...tasks, response.data]);
       setNewTaskTitle("");
+      setSelectedFile(null);
+      setSelectedDate("");
     } catch (err) {
       console.error("Error adding task:", err);
     }
@@ -103,8 +172,20 @@ function TaskList({showCompleted}) {
   } catch (err) {
     console.error("Error loading time:", err);
     setCurrentTime("Error loading time");
-  }
-};
+    }
+  };
+
+  const handleSort = async (order) => {
+    try {
+      const response = await axios.post("http://localhost:5002/sort", {
+        tasks: tasks, 
+        sortBy: order
+      });
+      setTasks(response.data); 
+    } catch (err) {
+      console.error("Sorting error:", err);
+    }
+  };
 
   
   // Filter tasks based on showCompleted prop
@@ -126,8 +207,26 @@ function TaskList({showCompleted}) {
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
         />
+        <input 
+          type="file" 
+          onChange={(e) => setSelectedFile(e.target.files[0])}
+          style={{ marginLeft: "10px" }}
+        />
+        <input 
+            type="datetime-local"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            style={{ marginLeft: "10px" }}
+        />
         <button type="submit">Add Task</button>
       </form>
+
+      <div style={{ margin: "10px 0" }}>
+        <button onClick={() => handleSort('title_asc')}>Sort A-Z</button>
+        <button onClick={() => handleSort('title_desc')} style={{ marginLeft: "5px" }}>Sort Z-A</button>
+        <button onClick={loadTasks} style={{ marginLeft: "5px" }}>Reset Order</button>
+      </div>
+        
 
       <div className="task-list">
         {filteredTasks.map(task => (
@@ -140,6 +239,12 @@ function TaskList({showCompleted}) {
               checked={task.completed}
               onChange={() => handleToggleComplete(task)}
             />
+
+            {task.attachment && (
+               <a href={task.attachment} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "10px", fontSize: "0.8em" }}>
+                  View Attachment
+               </a>
+            )}
 
             {editingTaskId === task._id ? (
               <>
@@ -158,6 +263,11 @@ function TaskList({showCompleted}) {
                 <button onClick={() => startEditing(task)}>Edit</button>
                 <button onClick={() => handleDeleteTask(task._id)}>Delete</button>
               </>
+            )}
+            {task.dueDate && (
+                <div style={{ fontSize: "0.8em", color: "#666", marginLeft: "10px" }}>
+                    Due: {new Date(task.dueDate).toLocaleString()}
+                </div>
             )}
           </div>
         ))}

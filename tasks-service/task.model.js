@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
     title: String,
-    completed: {type: Boolean, default: false}
+    completed: {type: Boolean, default: false},
+    attachment: { type: String, default: "" },
+    dueDate: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Task', taskSchema);

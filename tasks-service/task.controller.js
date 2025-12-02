@@ -4,7 +4,9 @@ const Task = require('./task.model');
 // Create a new task
 exports.createTask = async (req, res) => {
     const task = new Task({
-        title: req.body.title
+        title: req.body.title,
+        attachment: req.body.attachment,
+        dueDate: req.body.dueDate
     });
 
     try {
@@ -33,6 +35,8 @@ exports.updateTask = async (req, res) => {
 
         if (req.body.title) task.title = req.body.title;
         if (req.body.completed !== undefined) task.completed = req.body.completed;
+        if (req.body.attachment) task.attachment = req.body.attachment;
+        if (req.body.dueDate) task.dueDate = req.body.dueDate;
 
         const updatedTask = await task.save();
         res.json(updatedTask);

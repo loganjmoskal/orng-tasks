@@ -5,6 +5,12 @@ const app = express();
 app.use(cors());
 app.use(express.json()); 
 
+const priorityMap = {
+    "High": 3,
+    "Medium": 2,
+    "Low": 1
+};
+
 
 app.post('/filter', (req, res) => {
     const { tasks, filterBy } = req.body;
@@ -39,7 +45,14 @@ app.post('/sort', (req, res) => {
     } else if (sortBy === 'title_desc') {
         sortedTasks.sort((a, b) => b.title.localeCompare(a.title));
     }
-    // add date sorting here later 
+    
+    else if (sortBy === 'priority') {
+        sortedTasks.sort((a, b) => {
+            const valA = priorityMap[a.priority] || 0;
+            const valB = priorityMap[b.priority] || 0;
+            return valB - valA; // sort descending (3 -> 2 -> 1)
+        });
+    }
 
     res.json(sortedTasks);
 });

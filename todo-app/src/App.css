@@ -1,77 +1,178 @@
+/* --- Global & Reset --- */
+body {
+  margin: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: #ffffff;
+  color: #333;
+}
+
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+/* --- 1. Top Orange Header --- */
+.app-header {
+  width: 100%;
+  background-color: #FF9F55; /* The Prototype Orange */
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.header-title {
+  text-align: center;
+  flex-grow: 1;
+}
+
+.header-title h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.header-title span {
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.icon-btn {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* --- 2. Add Task Area --- */
+.task-form-container {
+  width: 90%;
+  max-width: 800px;
+  background-color: #F0F0F0; /* Light Grey Bar */
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.task-form-container input[type="text"] {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  padding: 10px;
+  outline: none;
+}
+
+.add-btn {
+  background-color: #e0e0e0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  padding: 5px 15px;
+  cursor: pointer;
+}
+
+/* --- 3. List Headers (Title / Priority) --- */
+.list-headers {
+  width: 90%;
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 15px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  color: #333;
+}
+
+/* --- 4. The Task Row (The Grey Bar) --- */
+.task-list {
+  width: 90%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .task-item {
+  background-color: #E8E8E8; /* The Grey Bar Color */
+  border-radius: 10px;
+  padding: 15px 20px;
   display: flex;
   align-items: center;
-  font-size: 1.2rem;
-  margin: 8px 0;
+  justify-content: space-between; /* Spreads content out */
+  transition: background 0.2s;
 }
 
-.task-item input[type="checkbox"] {
-  margin-right: 10px;
-}
-
-.task-item.completed span {
-  text-decoration: line-through;
-  color: #888;
-}
-
-.setting-item {
+.task-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 300px;
-  margin: 20px 0;
-  font-size: 1.2rem;
+  flex-grow: 1;
+  gap: 15px;
 }
 
-.setting-item label {
-  margin-right: 10px;
-}
-
-.setting-item input[type="checkbox"] {
-  width: 25px;
-  height: 25px;
-}
-
-a {
-  color: #09cc54;
+.task-title {
   font-size: 1rem;
+  font-weight: 500;
+}
+
+.task-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto; /* Pushes everything to the right */
+  margin-right: 20px;
+}
+
+.priority-badge {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Custom Checkbox (Circle style) */
+.circle-checkbox {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #333;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-checkbox:checked {
+  background-color: #333;
+  border-color: #333;
+  position: relative;
+}
+
+/* Completed State */
+.task-item.completed {
+  opacity: 0.6;
+}
+.task-item.completed .task-title {
+  text-decoration: line-through;
+}
+
+/* Action Buttons (Edit/Delete) */
+.action-buttons button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-left: 5px;
+  opacity: 0.5;
+}
+.action-buttons button:hover {
+  opacity: 1;
 }

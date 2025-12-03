@@ -3,11 +3,10 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import './App.css';
 
-// Your backend API's URL
 const API_URL = "http://localhost:5000/tasks";
 
 function TaskList({showCompleted}) {
-  // state variables
+  // --- STATE VARIABLES ---
   const [tasks, setTasks] = useState([]); 
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
@@ -20,7 +19,12 @@ function TaskList({showCompleted}) {
 
   const [selectedDate, setSelectedDate] = useState("");
 
-  // load tasks from the backend when the app starts
+  const [priority, setPriority] = useState("Medium");
+
+  const [currentList, setCurrentList] = useState("Main");
+  const [lists, setLists] = useState(["Main", "Work", "Personal"]);
+
+  // --- LOAD TASKS ON MOUNT & LIST CHANGE ---
   useEffect(() => {
     loadTasks();
     loadTime();
@@ -30,42 +34,53 @@ function TaskList({showCompleted}) {
     }, 60000); // update time every minute
 
     return () => clearInterval(timer);
-  }, []);
+  }, [currentList]);
 
-  // due date alert
+
+  // --- GLOBAL NOTIFICATION LISTENER ---
   useEffect(() => {
-    const checkDueDates = () => {
-      const now = new Date();
-      
-      tasks.forEach(task => {
-        // only check active tasks that have a due date
-        if (!task.completed && task.dueDate) {
-          const due = new Date(task.dueDate);
-          const timeDiff = due - now;
+    const checkAllDueDates = async () => {
+      try {
+        // fetch all tasks from the backend
+        const response = await axios.get(`${API_URL}?all=true`);
+        const allTasks = response.data;
+        
+        const now = new Date();
 
-          // alert if the task is due within the next 10 seconds
-          if (Math.abs(timeDiff) < 10000) { 
-             alert(`REMINDER: "${task.title}" is due now!`);
+        allTasks.forEach(task => {
+          // check active tasks with due dates
+          if (!task.completed && task.dueDate) {
+            const due = new Date(task.dueDate);
+            const timeDiff = due - now;
+
+            // check if due within the last/next 10 seconds
+            if (Math.abs(timeDiff) < 10000) { 
+               alert(`REMINDER: "${task.title}" (List: ${task.listName}) is due!`);
+            }
           }
-        }
-      });
+        });
+      } catch (err) {
+        console.error("Background check failed:", err);
+      }
     };
 
-    // run every 10 seconds
-    const alertInterval = setInterval(checkDueDates, 10000);
+    // run this check every 10 seconds
+    const interval = setInterval(checkAllDueDates, 10000);
 
-    return () => clearInterval(alertInterval);
-  }, [tasks]);
+    return () => clearInterval(interval);
+  }, []);
+
 
   // function to load tasks from the backend
   const loadTasks = async () => {
     try {
-      const response = await axios.get(API_URL);
-      setTasks(response.data); // update our state with the tasks
+      const response = await axios.get(`${API_URL}?list=${currentList}`);
+      setTasks(response.data);
     } catch (err) {
       console.error("Error loading tasks:", err);
     }
   };
+
 
   // function to handle adding a new task
   const handleAddTask = async (e) => {
@@ -90,12 +105,14 @@ function TaskList({showCompleted}) {
       }
     }
 
-    // now create the task with the (possibly) uploaded attachment URL
+    // create the task
     try {
       const response = await axios.post(API_URL, {
         title: newTaskTitle,
         attachment: attachmentURL,
-        dueDate: selectedDate
+        dueDate: selectedDate,
+        priority: priority,
+        listName: currentList
       });
 
       const createdTask = response.data;
@@ -106,7 +123,7 @@ function TaskList({showCompleted}) {
           await axios.post("http://localhost:5003/schedule", {
             taskId: createdTask._id,
             taskTitle: createdTask.title,
-            dueTime: selectedDate
+            dueTime: selectedDate,
           });
           console.log("Notification scheduled!");
         } catch (notifErr) {
@@ -119,10 +136,14 @@ function TaskList({showCompleted}) {
       setNewTaskTitle("");
       setSelectedFile(null);
       setSelectedDate("");
+      setPriority("Medium");
+
+
     } catch (err) {
       console.error("Error adding task:", err);
     }
   };
+
 
   // function to handle toggling a tasks completed status
   const handleToggleComplete = async (taskToUpdate) => {
@@ -141,6 +162,7 @@ function TaskList({showCompleted}) {
     }
   };
 
+
   // function to handle deleting a task
   const handleDeleteTask = async (id) => {
     if(!window.confirm("Are you sure you want to delete this task?")) return;
@@ -150,7 +172,8 @@ function TaskList({showCompleted}) {
     } catch (err) { console.error("Error deleting task:", err); }
   };
 
-  // functions for editing tasks
+
+  // function for editing tasks
   const startEditing = (task) => {
     setEditingTaskId(task._id);
     setEditingTaskTitle(task.title);
@@ -164,6 +187,7 @@ function TaskList({showCompleted}) {
     } catch (err) { console.error("Error saving edit:", err); }
   };
 
+
   // function to load current time from microservice
   const loadTime = async () => {
   try {
@@ -175,6 +199,8 @@ function TaskList({showCompleted}) {
     }
   };
 
+
+  // function to handle sorting tasks
   const handleSort = async (order) => {
     try {
       const response = await axios.post("http://localhost:5002/sort", {
@@ -186,18 +212,47 @@ function TaskList({showCompleted}) {
       console.error("Sorting error:", err);
     }
   };
-
   
+
   // Filter tasks based on showCompleted prop
   const filteredTasks = tasks.filter(task => 
     showCompleted || !task.completed
   );
 
-  // The main UI
+  // --- UI ---
   return (
-    <div>
+    <div className="App">
       <h1>My Orng Tasks</h1>
+
       <h3>{currentTime}</h3>
+
+      <div className="list-tabs" style={{ marginBottom: "20px" }}>
+        {lists.map(list => (
+          <button 
+            key={list}
+            onClick={() => setCurrentList(list)}
+            style={{
+              marginRight: "5px",
+              fontWeight: "bold",
+              backgroundColor: currentList === list ? "#61dafb" : "#eee",
+              border: "1px solid #ccc",
+              cursor: "pointer",
+              padding: "5px 10px"
+            }}
+          >
+            {list}
+          </button>
+        ))}
+        
+        <button onClick={() => {
+            const newName = prompt("Enter new list name:");
+            if(newName) {
+                setLists([...lists, newName]);
+                setCurrentList(newName);
+            }
+        }}>+ New List</button>
+      </div>
+
       <Link to="/settings">Go to Settings</Link>
 
       <form onSubmit={handleAddTask} className="task-form">
@@ -207,6 +262,15 @@ function TaskList({showCompleted}) {
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
         />
+        <select 
+            value={priority} 
+            onChange={(e) => setPriority(e.target.value)}
+            style={{ marginLeft: "10px", padding: "5px" }}
+        >
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
         <input 
           type="file" 
           onChange={(e) => setSelectedFile(e.target.files[0])}
@@ -224,6 +288,7 @@ function TaskList({showCompleted}) {
       <div style={{ margin: "10px 0" }}>
         <button onClick={() => handleSort('title_asc')}>Sort A-Z</button>
         <button onClick={() => handleSort('title_desc')} style={{ marginLeft: "5px" }}>Sort Z-A</button>
+        <button onClick={() => handleSort('priority')} style={{ marginLeft: "5px" }}>Sort by Priority</button>
         <button onClick={loadTasks} style={{ marginLeft: "5px" }}>Reset Order</button>
       </div>
         
@@ -240,12 +305,6 @@ function TaskList({showCompleted}) {
               onChange={() => handleToggleComplete(task)}
             />
 
-            {task.attachment && (
-               <a href={task.attachment} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "10px", fontSize: "0.8em" }}>
-                  View Attachment
-               </a>
-            )}
-
             {editingTaskId === task._id ? (
               <>
                 <input
@@ -260,10 +319,27 @@ function TaskList({showCompleted}) {
             ) : (
               <>
                 <span>{task.title}</span>
+
                 <button onClick={() => startEditing(task)}>Edit</button>
                 <button onClick={() => handleDeleteTask(task._id)}>Delete</button>
+
+                <span style={{ 
+                  fontSize: "0.8em", 
+                  fontWeight: "bold", 
+                  color: task.priority === "High" ? "red" : task.priority === "Medium" ? "orange" : "green",
+                  marginRight: "10px"
+                }}>
+                  [{task.priority || "Medium"}]
+                </span>
               </>
             )}
+
+            {task.attachment && (
+               <a href={task.attachment} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "10px", fontSize: "0.8em" }}>
+                  View Attachment
+               </a>
+            )}
+            
             {task.dueDate && (
                 <div style={{ fontSize: "0.8em", color: "#666", marginLeft: "10px" }}>
                     Due: {new Date(task.dueDate).toLocaleString()}

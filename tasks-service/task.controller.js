@@ -6,7 +6,9 @@ exports.createTask = async (req, res) => {
     const task = new Task({
         title: req.body.title,
         attachment: req.body.attachment,
-        dueDate: req.body.dueDate
+        dueDate: req.body.dueDate,
+        priority: req.body.priority,
+        listName: req.body.listName || "Main"
     });
 
     try {
@@ -20,7 +22,14 @@ exports.createTask = async (req, res) => {
 // Read all tasks
 exports.getAllTasks = async (req, res) => {
     try {
-        const tasks = await Task.find();
+        let filter = {};
+
+        if (req.query.all !== 'true') {
+            const listName = req.query.list || "Main"; 
+            filter = { listName: listName };
+        }
+
+        const tasks = await Task.find(filter);
         res.json(tasks);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -37,6 +46,7 @@ exports.updateTask = async (req, res) => {
         if (req.body.completed !== undefined) task.completed = req.body.completed;
         if (req.body.attachment) task.attachment = req.body.attachment;
         if (req.body.dueDate) task.dueDate = req.body.dueDate;
+        if (req.body.priority) task.priority = req.body.priority;
 
         const updatedTask = await task.save();
         res.json(updatedTask);

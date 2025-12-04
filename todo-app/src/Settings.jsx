@@ -3,26 +3,40 @@ import { Link } from 'react-router-dom';
 
 function Settings({ showCompleted, setShowCompleted }) {
 
-  const handleToggle = () => {
-    setShowCompleted(!showCompleted);
-  };
-
   return (
-    <div>
-      <h1>Settings</h1>
+    <div className="App">
       
-      <div className="setting-item">
-        <label htmlFor="show-completed">Show Completed Tasks</label>
-        <input
-          type="checkbox"
-          id="show-completed"
-          checked={showCompleted}
-          onChange={handleToggle}
-        />
-      </div>
+      {/* --- HEADER --- */}
+      <header className="app-header">
 
-      <br />
-      <Link to="/">Back to Tasks</Link>
+        
+        <div className="header-title">
+            <h1>ORNG Tasks</h1>
+        </div>
+
+        <Link to="/" className="icon-btn" title="Back to Tasks">←</Link>
+      </header>
+
+      {/* --- MAIN CONTENT --- */}
+      <div className="settings-container">
+        
+        <div className="settings-card">
+            <h2>Preferences</h2>
+
+            <label className="settings-label">
+                <input 
+                    type="checkbox" 
+                    className="circle-checkbox" /* Reusing your existing checkbox style */
+                    checked={showCompleted}
+                    onChange={(e) => setShowCompleted(e.target.checked)}
+                />
+                Show Completed Tasks
+            </label>
+
+
+        </div>
+
+      </div>
     </div>
   );
 }

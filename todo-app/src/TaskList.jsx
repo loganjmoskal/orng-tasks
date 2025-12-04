@@ -222,129 +222,126 @@ function TaskList({showCompleted}) {
   // --- UI ---
   return (
     <div className="App">
-      <h1>My Orng Tasks</h1>
+      <header className="app-header">
+        <div className="header-title">
+            <h1>ORNG Tasks</h1>
+            <span>{currentTime}</span> 
+        </div>
+        <Link to="/settings" className="icon-btn">⚙️</Link>
+      </header>
 
-      <h3>{currentTime}</h3>
-
-      <div className="list-tabs" style={{ marginBottom: "20px" }}>
+      <div className="list-tabs">
         {lists.map(list => (
-          <button 
-            key={list}
-            onClick={() => setCurrentList(list)}
-            style={{
-              marginRight: "5px",
-              fontWeight: "bold",
-              backgroundColor: currentList === list ? "#61dafb" : "#eee",
-              border: "1px solid #ccc",
-              cursor: "pointer",
-              padding: "5px 10px"
-            }}
-          >
-            {list}
-          </button>
+          <button key={list} onClick={() => setCurrentList(list)}>{list}</button>
         ))}
-        
-        <button onClick={() => {
-            const newName = prompt("Enter new list name:");
-            if(newName) {
-                setLists([...lists, newName]);
-                setCurrentList(newName);
-            }
-        }}>+ New List</button>
+        <button 
+            className="add-list-btn"
+            onClick={() => {
+                const newName = prompt("Enter new list name:");
+                if(newName) { setLists([...lists, newName]); setCurrentList(newName); }
+            }}
+        >+</button>
       </div>
 
-      <Link to="/settings">Go to Settings</Link>
-
-      <form onSubmit={handleAddTask} className="task-form">
-        <input
-          type="text"
-          placeholder="Enter a new task..."
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-        />
-        <select 
-            value={priority} 
-            onChange={(e) => setPriority(e.target.value)}
-            style={{ marginLeft: "10px", padding: "5px" }}
-        >
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-        </select>
-        <input 
-          type="file" 
-          onChange={(e) => setSelectedFile(e.target.files[0])}
-          style={{ marginLeft: "10px" }}
-        />
-        <input 
-            type="datetime-local"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            style={{ marginLeft: "10px" }}
-        />
-        <button type="submit">Add Task</button>
-      </form>
-
-      <div style={{ margin: "10px 0" }}>
-        <button onClick={() => handleSort('title_asc')}>Sort A-Z</button>
-        <button onClick={() => handleSort('title_desc')} style={{ marginLeft: "5px" }}>Sort Z-A</button>
-        <button onClick={() => handleSort('priority')} style={{ marginLeft: "5px" }}>Sort by Priority</button>
-        <button onClick={loadTasks} style={{ marginLeft: "5px" }}>Reset Order</button>
-      </div>
-        
-
-      <div className="task-list">
-        {filteredTasks.map(task => (
-          <div
-            key={task._id}
-            className={`task-item ${task.completed ? 'completed' : ''}`}
-          >
+      <div className="task-form-container">
+        <form onSubmit={handleAddTask} className="task-form">
             <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={() => handleToggleComplete(task)}
+              type="text"
+              className="task-input-text"
+              placeholder="Click to Add Task..."
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+            />
+            
+            <select 
+                className="task-input-select"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)} 
+            >
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+
+            <label className="task-attach-label" title="Attach File">
+                📎
+                <input 
+                    type="file" 
+                    onChange={(e) => setSelectedFile(e.target.files[0])} 
+                    style={{display: 'none'}} 
+                />
+            </label>
+            {selectedFile && <span className="file-selected-dot">•</span>}
+            
+            <input 
+                type="datetime-local" 
+                className="task-input-date"
+                value={selectedDate} 
+                onChange={(e) => setSelectedDate(e.target.value)} 
             />
 
-            {editingTaskId === task._id ? (
-              <>
-                <input
-                  type="text"
-                  value={editingTaskTitle}
-                  onChange={(e) => setEditingTaskTitle(e.target.value)}
-                />
+            <button type="submit" className="add-btn">＋</button>
+        </form>
+      </div>
 
-                <button onClick={() => saveEdit(task._id)}>Save</button>
-                <button onClick={() => setEditingTaskId(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <span>{task.title}</span>
-
-                <button onClick={() => startEditing(task)}>Edit</button>
-                <button onClick={() => handleDeleteTask(task._id)}>Delete</button>
-
-                <span style={{ 
-                  fontSize: "0.8em", 
-                  fontWeight: "bold", 
-                  color: task.priority === "High" ? "red" : task.priority === "Medium" ? "orange" : "green",
-                  marginRight: "10px"
-                }}>
-                  [{task.priority || "Medium"}]
-                </span>
-              </>
-            )}
-
-            {task.attachment && (
-               <a href={task.attachment} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "10px", fontSize: "0.8em" }}>
-                  View Attachment
-               </a>
-            )}
+      <div className="list-headers">
+        <span className="sort-header" onClick={() => handleSort('title_asc')}>Title ⇅</span>
+        <span className="sort-header" onClick={() => handleSort('priority')}>Priority ⇅</span>
+      </div>
+        
+      <div className="task-list">
+        {filteredTasks.map(task => (
+          <div key={task._id} className={`task-item ${task.completed ? 'completed' : ''}`}>
             
-            {task.dueDate && (
-                <div style={{ fontSize: "0.8em", color: "#666", marginLeft: "10px" }}>
-                    Due: {new Date(task.dueDate).toLocaleString()}
+            <div className="task-content">
+                {editingTaskId === task._id ? (
+                    <>
+                    <input 
+                        type="text" 
+                        className="edit-mode-input"
+                        value={editingTaskTitle} 
+                        onChange={(e) => setEditingTaskTitle(e.target.value)} 
+                    />
+                    <button className="edit-mode-btn" onClick={() => saveEdit(task._id)}>💾</button>
+                    <button className="edit-mode-btn" onClick={() => setEditingTaskId(null)}>❌</button>
+                    </>
+                ) : (
+                    <div className="task-info">
+                        <span className="task-title">{task.title}</span>
+                        <div className="task-meta-row">
+                            {task.dueDate && (
+                                <div className="meta-date">
+                                    📅 {new Date(task.dueDate).toLocaleString()}
+                                </div>
+                            )}
+                            {task.attachment && (
+                                <a href={task.attachment} target="_blank" rel="noreferrer" className="meta-attachment">
+                                    📎 Attachment
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="task-meta-group">
+                <span className={`priority-badge priority-${(task.priority || "Medium").toLowerCase()}`}>
+                    {task.priority || "Medium"}
+                </span>
+
+                <div className="action-buttons">
+                   <button onClick={() => startEditing(task)}>✏️</button>
+                   <button onClick={() => handleDeleteTask(task._id)}>🗑️</button>
                 </div>
-            )}
+
+                <input
+                  type="checkbox"
+                  className="circle-checkbox"
+                  checked={task.completed}
+                  onChange={() => handleToggleComplete(task)}
+                />
+            </div>
+
           </div>
         ))}
       </div>

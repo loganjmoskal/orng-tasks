@@ -2,8 +2,6 @@
 
 A full-stack to-do app built on a **microservice architecture**. A React frontend talks to five small, independent backend services. Each one owns a single job: tasks, file uploads, sorting, notifications, and the date/time. Built for CS 361 (Software Engineering I) at Oregon State University.
 
-![ORNG Tasks screenshot](docs/screenshot.png)
-
 ## Features
 
 - **Task management**: create, edit, complete, and delete tasks, stored in MongoDB
